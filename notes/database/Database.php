@@ -6,7 +6,7 @@ class Database {
 
     public function __construct(){
         $this->db = new PDO(DSN, USERNAME, PASSWORD);
-        $this->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
     public function add($data){
@@ -17,7 +17,10 @@ class Database {
             $query = "INSERT INTO notes (name, description, created_at) VALUES (:name, :description, now())";
             $statement = $this->db->prepare($query);
             $statement->execute(array(":name"=>$name, ":description"=>$description));
-            if($statement) echo "Note has been added.";
+            if($statement){
+                $_SESSION['added']= "Note has been added.";
+                $this->redirect('index.php');
+            }
         } catch(PDOException $e){
             echo 'Error ' . $e->getMessage();
         }
@@ -32,7 +35,10 @@ class Database {
             $query = "UPDATE notes SET name=:name,description=:description WHERE id=:id";
             $statement = $this->db->prepare($query);
             $statement->execute(array(":name"=>$name, ":description"=>$description, ":id"=>$id));
-            if($statement) echo "Note has been updated.";
+            if($statement){
+                $_SESSION['updated']= "Note has been updated.";
+                $this->redirect('index.php');
+            }
         } catch(PDOException $e){
             echo 'Error ' . $e->getMessage();
         }
@@ -45,7 +51,10 @@ class Database {
             $query = "DELETE FROM notes WHERE id=:id";
             $statement = $this->db->prepare($query);
             $statement->execute(array(":id"=>$id));
-            if($statement) echo "Note has been deleted.";
+            if($statement){
+                $_SESSION['deleted']= "Note has been deleted.";
+                $this->redirect('index.php');
+            }
         } catch(PDOException $e){
             echo 'Error ' . $e->getMessage();
         }
@@ -66,7 +75,8 @@ class Database {
                             $note->description
                         </td>
                         <td>
-                            
+                            <a href='update.php?id=$note->id' ><button>Edit</button></a>
+                            <a href='delete.php?id=$note->id' ><button>Delete</button></a>
                         </td>
                     </tr>
                  ";
@@ -87,10 +97,14 @@ class Database {
             $statement->execute(array(":id"=>$id));
             $note = $statement->fetch(PDO::FETCH_OBJ);
 
-            var_dump($note);
+            return $note;
                
         } catch(PDOException $e){
             echo 'Error ' . $e->getMessage();
         }
+    }
+
+    public function redirect($page){
+        header('location:'. $page);
     }
 }
